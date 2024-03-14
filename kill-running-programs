@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# kill-running-programs
+# V1.0
+# This is a program designed for a system admin to kill all running csh (but it could be any program) that have been running for more than two hours.
+
+killtime=200
+ctime=`date | cut -c12-16 | tr -d ":"`
+# Can change process to whichever you would like to kill.
+process="csh"; [ "$1" ] && process="$1"
+
+ps -aef | while read id pid w3 w4 stime restline
+do
+	echo $restline | grep "$process$" > /dev/null && echo $stime | grep '^[A-Z]' > /dev/null && echo "kill -9 $pid" && continue
+	diff=0
+	echo $restline | grep "$process$" > /dev/null && time=`echo $stime | tr -d ':'` && diff=`expr $ctime - $time`
+	# If going over night, diff would be negative, so check if lt 0.
+	# 2400 is adding 24 hours
+	[ $diff -lt 0 ] && diff=`expr 2400 - $time + $ctime`
+	[ $diff -ge $killtime ] && echo "kill -9 $pid"
+done
+
